@@ -2,6 +2,8 @@
 
 A web-based AI agent for Earned Schedule (ES) re-plan simulation that provides real-time calculation and visualization of key ES metrics such as F-SV(t) and TSPI<sub>M</sub>.
 
+![ES-Replan interface](https://github.com/user-attachments/assets/8a69f10d-025f-4d1a-bced-96c1775ffdd2)
+
 ## Features
 
 - Interactive data entry for project tasks, progress, and milestones
