@@ -2,6 +2,12 @@
 
 A web-based AI agent for Earned Schedule (ES) re-plan simulation that provides real-time calculation and visualization of key ES metrics such as F-SV(t) and TSPI<sub>M</sub>.
 
+The development of this repository was inspired by the Earned Schedule Community in their development of Earned Schedule tools. To learn more visit https://www.earnedschedule.com/Calculator.shtml
+
+
+https://github.com/user-attachments/assets/82db3630-aa57-4ae3-a77f-846128bd16c1
+
+
 ![ES-Replan interface](https://github.com/user-attachments/assets/8a69f10d-025f-4d1a-bced-96c1775ffdd2)
 
 ## Features
