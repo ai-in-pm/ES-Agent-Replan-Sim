@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Earned Schedule Re-Plan Simulation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container-fluid">
+        <header class="py-3 mb-4 border-bottom">
+            <div class="container d-flex justify-content-between align-items-center">
+                <h1 class="h2">Earned Schedule Re-Plan Simulation</h1>
+                <div class="sim-controls">
+                    <button id="btn-reset" class="btn btn-outline-secondary me-2">Reset</button>
+                    <button id="btn-simulate" class="btn btn-primary">Run Simulation</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="row">
+            <!-- Left column for inputs and controls -->
+            <div class="col-md-4">
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Project Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="milestone-duration" class="form-label">Milestone Duration (periods)</label>
+                            <input type="number" class="form-control" id="milestone-duration" value="10" min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="current-period" class="form-label">Current Period</label>
+                            <input type="number" class="form-control" id="current-period" value="3" min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="simulation-steps" class="form-label">Simulation Steps</label>
+                            <input type="number" class="form-control" id="simulation-steps" value="5" min="1">
+                        </div>
+                        <div class="mb-3">
+                            <label for="scenario-select" class="form-label">Simulation Scenario</label>
+                            <select class="form-select" id="scenario-select">
+                                <option value="recovery">Schedule Recovery</option>
+                                <option value="slippage">Schedule Slippage</option>
+                                <option value="maintain">Maintain Current Performance</option>
+                            </select>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="replan-checkbox">
+                            <label class="form-check-label" for="replan-checkbox">
+                                Enable Re-Plan at Current Period
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Task Progress</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm" id="progress-table">
+                                <thead>
+                                    <tr>
+                                        <th>Period</th>
+                                        <th>PV</th>
+                                        <th>EV</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="progress-table-body">
+                                    <!-- Table rows will be populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button id="btn-add-period" class="btn btn-sm btn-secondary mt-2">Add Period</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right column for charts and results -->
+            <div class="col-md-8">
+                <!-- Current Metrics -->                
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Current Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="metric-box">
+                                    <h6>Earned Schedule (ES)</h6>
+                                    <div class="metric-value" id="es-value">-</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-box">
+                                    <h6>SPI(t)</h6>
+                                    <div class="metric-value" id="spi-t-value">-</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-box">
+                                    <h6>SV(t)</h6>
+                                    <div class="metric-value" id="sv-t-value">-</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="metric-box">
+                                    <h6>TSPI<sub>M</sub></h6>
+                                    <div class="metric-value" id="tspi-m-value">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="metric-box">
+                                    <h6>Milestone Forecast (IEAC(t)<sub>M</sub>)</h6>
+                                    <div class="metric-value" id="ieac-t-m-value">-</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="metric-box">
+                                    <h6>Forecast Schedule Variance (F-SV(t))</h6>
+                                    <div class="metric-value" id="f-sv-t-value">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- S-Curve Chart -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Progress Chart (S-Curve)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="s-curve-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- Performance Indices Chart -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">Performance Indices</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="performance-chart" class="chart-container"></div>
+                    </div>
+                </div>
+
+                <!-- AI Agent Analysis -->
+                <div class="card mb-3">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">AI Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="ai-analysis" class="ai-message">
+                            <p>Welcome to the Earned Schedule Re-Plan Simulation. Enter your project data or use the simulation 
+                            to see real-time earned schedule metrics and forecasts.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation Control Panel (hidden until simulation starts) -->
+        <div class="simulation-panel card mb-3" id="simulation-panel" style="display: none;">
+            <div class="card-header bg-dark text-white">
+                <h5 class="card-title mb-0">Simulation Control</h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <button id="btn-sim-step" class="btn btn-primary">Next Step</button>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btn-sim-play" class="btn btn-success">Play</button>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="progress">
+                            <div id="sim-progress" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <button id="btn-sim-stop" class="btn btn-danger">Stop</button>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col">
+                        <div id="sim-status" class="alert alert-info">Simulation ready. Press 'Next Step' or 'Play' to begin.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Application JavaScript -->
+    <script src="{{ url_for('static', filename='js/es_calculator.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/simulation.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
